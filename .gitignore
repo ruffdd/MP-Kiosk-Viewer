@@ -108,3 +108,10 @@ config.py
 
 # exclude final executable
 mpkv
+
+#visual studio
+*.pyproj
+/.vs
+*.sln
+/.vscode
+/.__pycache__

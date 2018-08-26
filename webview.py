@@ -1,5 +1,6 @@
 import time
 import threading
+import os
 from typing import Callable
 
 import gi
@@ -15,7 +16,8 @@ class MainWindow(Gtk.Window):
     PAGES = [
         ("Google", "http://google.com/", "", None, None),
         ("DuckDuckGo", "http://duckduckgo.com/", "", None, None),
-        ("Yahoo", "http://yahoo.com/", "", None, None)
+        ("Yahoo", "http://yahoo.com/", "", None, None),
+        ("Test","file:///" + os.getcwd()+"/testsite.html","",None,None)
     ]
 
     # Load Config
@@ -89,8 +91,9 @@ class MainWindow(Gtk.Window):
             view.connect("authenticate", self._handle_http_auth_callback(page[3], page[4]))
             view.connect("load-changed", self._handle_load_changed)
             view.connect("load-changed", self._handle_load_change_callback(page[2]))
+            view.connect("load-changed", self._handle_load_change_callback(open("autocomplete.js").read(-1)))
+            view.connect("script-dialog",self._title_changed)
             view.load_uri(page[1])
-
             self.renderer.append(view)
             renderer_container.pack_start(view, True, True, 0)
 
@@ -166,7 +169,10 @@ class MainWindow(Gtk.Window):
     def go_forward(self, button: Gtk.Button) -> None:
         self.current_renderer.go_forward()
 
-
+    def _title_changed(self,dialog) -> bool:
+        
+        return False
+        
 if __name__ == "__main__":
     t = MainWindow()
     Gtk.main()
