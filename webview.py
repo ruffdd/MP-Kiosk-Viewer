@@ -9,6 +9,7 @@ gi.require_version('WebKit2', '4.0')
 from gi.repository import Gtk, Gdk
 from gi.repository import WebKit2
 
+
 class MainWindow(Gtk.Window):
 
     ELEMENT_PADDING = 4
@@ -17,7 +18,8 @@ class MainWindow(Gtk.Window):
         ("Google", "http://google.com/", "", None, None),
         ("DuckDuckGo", "http://duckduckgo.com/", "", None, None),
         ("Yahoo", "http://yahoo.com/", "", None, None),
-        ("Test","file:///" + os.getcwd()+"/testsite.html","",None,None)
+        ("TTF","https://fius.informatik.uni-stuttgart.de/ttf/#/","",None,None),
+        ("Test", "file:///" + os.getcwd()+"/testsite.html", "", None, None)
     ]
 
     # Load Config
@@ -45,12 +47,13 @@ class MainWindow(Gtk.Window):
         # Window Layout
         root_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.add(root_box)
-        root_box.pack_start(self._setup_toolbar(), False, False, MainWindow.ELEMENT_PADDING)
+        root_box.pack_start(self._setup_toolbar(), False,
+                            False, MainWindow.ELEMENT_PADDING)
         root_box.pack_start(self.loading_bar, False, False, 0)
         root_box.pack_start(self._setup_webrenderer(), True, True, 0)
 
         # Window Setup
-        self.connect("key-press-event",self._key_press_event)
+        self.connect("key-press-event", self._key_press_event)
         self.connect('destroy', Gtk.main_quit)
         self.fullscreen()
         self.show_all()
@@ -67,32 +70,45 @@ class MainWindow(Gtk.Window):
             self.buttons.append(btn)
             toolbar.pack_start(btn, False, False, MainWindow.ELEMENT_PADDING)
 
-        self.btn_forward = Gtk.Button.new_from_icon_name('go-next', Gtk.IconSize.SMALL_TOOLBAR)
+        self.btn_forward = Gtk.Button.new_from_icon_name(
+            'go-next', Gtk.IconSize.SMALL_TOOLBAR)
         self.btn_forward.set_sensitive(False)
         self.btn_forward.connect("clicked", self.go_forward)
-        toolbar.pack_end(self.btn_forward, False, False, MainWindow.ELEMENT_PADDING)
+        toolbar.pack_end(self.btn_forward, False, False,
+                         MainWindow.ELEMENT_PADDING)
 
-        self.btn_reload = Gtk.Button.new_from_icon_name('view-refresh', Gtk.IconSize.SMALL_TOOLBAR)
+        self.btn_reload = Gtk.Button.new_from_icon_name(
+            'view-refresh', Gtk.IconSize.SMALL_TOOLBAR)
         self.btn_reload.connect("clicked", self.refresh)
-        toolbar.pack_end(self.btn_reload, False, False, MainWindow.ELEMENT_PADDING)
+        toolbar.pack_end(self.btn_reload, False, False,
+                         MainWindow.ELEMENT_PADDING)
 
-        self.btn_back = Gtk.Button.new_from_icon_name('go-previous', Gtk.IconSize.SMALL_TOOLBAR)
+        self.btn_back = Gtk.Button.new_from_icon_name(
+            'go-previous', Gtk.IconSize.SMALL_TOOLBAR)
         self.btn_back.set_sensitive(False)
         self.btn_back.connect("clicked", self.go_back)
-        toolbar.pack_end(self.btn_back, False, False, MainWindow.ELEMENT_PADDING)
+        toolbar.pack_end(self.btn_back, False, False,
+                         MainWindow.ELEMENT_PADDING)
 
         return toolbar
 
     def _setup_webrenderer(self) -> Gtk.Box:
-        renderer_container = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-
+        
+        renderer_container = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        WebKit2.Settings.set_enable_javascript(WebKit2.Settings(), False)
+        WebKit2.Settings.set_enable_developer_extras(WebKit2.Settings() , True)
         for page in MainWindow.PAGES:
             view = WebKit2.WebView()
-            view.connect("authenticate", self._handle_http_auth_callback(page[3], page[4]))
+            
+            view.connect("authenticate",
+                         self._handle_http_auth_callback(page[3], page[4]))
             view.connect("load-changed", self._handle_load_changed)
-            view.connect("load-changed", self._handle_load_change_callback(page[2]))
-            view.connect("load-changed", self._handle_load_change_callback(open("autocomplete.js").read(-1)))
-            view.connect("script-dialog",self._title_changed)
+            view.connect("load-changed",
+                         self._handle_load_change_callback(page[2]))
+            #view.connect("load-changed", self._handle_load_change_callback(open("autocomplete.js").read(-1)))
+            view.connect("script-dialog", self._handle_script_dialog)
+            #view.connect("console-message",self._handle_js_console);
             view.load_uri(page[1])
             self.renderer.append(view)
             renderer_container.pack_start(view, True, True, 0)
@@ -102,15 +118,17 @@ class MainWindow(Gtk.Window):
     def _handle_http_auth_callback(self, username: str, password: str) -> Callable[[WebKit2.WebView, WebKit2.AuthenticationRequest], bool]:
         def func(web_view: WebKit2.WebView, auth_req: WebKit2.AuthenticationRequest) -> bool:
             if username is not None:
-                auth_req.authenticate(WebKit2.Credential(username, password, WebKit2.CredentialPersistence.FOR_SESSION))
+                auth_req.authenticate(WebKit2.Credential(
+                    username, password, WebKit2.CredentialPersistence.FOR_SESSION))
                 return True
             return False
         return func
 
-    def _key_press_event(self,widget,event) -> bool:
+    def _key_press_event(self, widget, event) -> bool:
         ctrl = (event.state & Gdk.ModifierType.CONTROL_MASK)
         if ctrl and Gdk.keyval_name(event.keyval) == 'Tab':
-            self._load_tab_callback((self.current_renderer_id + 1) % len(self.PAGES))(None)
+            self._load_tab_callback(
+                (self.current_renderer_id + 1) % len(self.PAGES))(None)
             return True
         if ctrl and Gdk.keyval_name(event.keyval) == 'F5':
             self.current_renderer.reload_bypass_cache()
@@ -169,10 +187,24 @@ class MainWindow(Gtk.Window):
     def go_forward(self, button: Gtk.Button) -> None:
         self.current_renderer.go_forward()
 
-    def _title_changed(self,dialog) -> bool:
+    def autocomplete_add(self)-> None:
+        WebKit2.web_view.view.run_javascript("Alert('recived')")
+        a=0
         
-        return False
+    def _handle_script_dialog(self, web_view, dialog) -> bool:
+        name = dialog.get_message()[1:dialog.get_message().find("#", 1)]
+        ret=False
+        if name == "autocomplete-add":
+            ret = True
+            
+            self.autocomplete_add()
+
+        return ret
         
+    def _handle_js_console(web_view,message,line,source_id)-> None:
+        print("JS-Console: "+message,'',"line:"+line)
+
+
 if __name__ == "__main__":
     t = MainWindow()
     Gtk.main()

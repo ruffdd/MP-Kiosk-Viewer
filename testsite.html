@@ -16,16 +16,22 @@
             background-color: #f0f0f0;
         }
     </style>
+    <link rel="stylesheet" href="autocomplete.css">
     <script src="autocomplete.js"></script>
 </head>
 
 <body>
     <h1>Test</h1>
     <form>
-        <p>Standard <input type="text"></p>
-        <p>autocomplete on <input autocomplete="on" type="text"></p>
-        <p>autocomplete off <input autocomplete="off" type="text"></p>
-        <p>passwort <input type="password"></p>
+        <p>Standard </p><input type="text">
+        <p>autocomplete on </p><input autocomplete="on" type="text">
+        <p>autocomplete off </p><input autocomplete="off" type="text">
+        <p>passwort </p><input type="password">
+        <p>Suche</p><input type="search" name="" id="" list="test">
+        <datalist id="test">
+            <option>vielleicht</option>
+            <option value="Nein"></option>
+        </datalist>
         <input type="submit">
     </form>
 </body>
